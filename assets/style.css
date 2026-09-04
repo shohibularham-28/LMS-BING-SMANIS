@@ -472,6 +472,13 @@ body{
   color:#282C3D;
 }
 .grade-table tr:hover td{background:#FAFBFE;}
+.table-responsive{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:16px;
+}
+.table-responsive .grade-table{min-width:640px;}
 .score-pill{
   display:inline-block;
   padding:4px 13px;
@@ -617,4 +624,10 @@ body{
   .content{padding:24px 20px;}
   .login-visual{display:none;}
   .login-panel-wrap{width:100%;}
+}
+
+@media(max-width:600px){
+  .table-responsive .grade-table{min-width:560px;}
+  .grade-table th{padding:10px 12px; font-size:10.5px;}
+  .grade-table td{padding:11px 12px; font-size:13px;}
 }

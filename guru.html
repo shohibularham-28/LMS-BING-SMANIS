@@ -99,7 +99,10 @@
           <div class="summary-grid" id="summaryGrid"></div>
           <div class="section-label" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
             <span>Detail Nilai per Siswa</span>
-            <button class="btn-secondary-sm" id="btnDownloadRekap">⬇️ Download Rekap (CSV)</button>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn-secondary-sm" id="btnDownloadRekap">⬇️ Download Rekap (CSV)</button>
+              <button class="btn-danger-sm" id="btnHapusSemuaNilai">🗑️ Hapus Semua Nilai</button>
+            </div>
           </div>
           <table class="grade-table" id="grade-table">
             <thead><tr><th>#</th><th>Nama Siswa</th><th>Skor</th><th>Nilai Asli</th><th>Predikat</th><th>Keterangan</th><th>Status</th><th>Aksi</th></tr></thead>
@@ -413,6 +416,17 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
       gradeC.innerHTML = '';
       gradeEmptySlot.innerHTML = emptyState("Belum ada nilai", "Belum ada siswa yang memiliki nilai untuk jenis ini.", "📊");
     }
+
+    const btnHapusSemuaNilai = document.getElementById('btnHapusSemuaNilai');
+    btnHapusSemuaNilai.disabled = !rows.length;
+    btnHapusSemuaNilai.onclick = async () => {
+      const ids = rows.map(r => r.id).filter(Boolean);
+      if (!ids.length) { alert('Tidak ada nilai untuk dihapus.'); return; }
+      if (!confirm(`Hapus SEMUA nilai (${ids.length} siswa) untuk jenis penilaian "${rekapState.jenis}" di kelas ini? Tindakan ini tidak bisa dibatalkan.`)) return;
+      const { error } = await supabase.from('nilai').delete().in('id', ids);
+      if (error) { alert('Gagal menghapus semua nilai: ' + error.message); return; }
+      await renderJenisOptions();
+    };
   }
 
   // ---- Download rekap nilai (per kelas & jenis penilaian) sebagai CSV ----
