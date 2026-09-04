@@ -68,10 +68,11 @@
   renderShell(profile, 'worksheet');
 
   const wsC = document.getElementById('worksheet-container');
+  const level = profile.kelas ? profile.kelas.level : getLevel(profile.kelas ? profile.kelas.nama : '');
   const { data } = await supabase
     .from('worksheet')
     .select('judul, meta, url, mulai, deadline')
-    .eq('kelas_id', profile.kelas_id)
+    .or(`level.eq.${level},kelas_id.eq.${profile.kelas_id}`)
     .order('created_at', { ascending: false });
 
   const list = data || [];

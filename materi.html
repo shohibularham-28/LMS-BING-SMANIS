@@ -68,10 +68,11 @@
   renderShell(profile, 'materi');
 
   const materiC = document.getElementById('materi-container');
+  const level = profile.kelas ? profile.kelas.level : getLevel(profile.kelas ? profile.kelas.nama : '');
   const { data } = await supabase
     .from('materi')
     .select('tag, judul, deskripsi, url')
-    .or(`kelas_id.eq.${profile.kelas_id},kelas_id.is.null`)
+    .or(`and(kelas_id.is.null,level.is.null),kelas_id.eq.${profile.kelas_id},level.eq.${level}`)
     .order('created_at', { ascending: true });
 
   const materi = data || [];

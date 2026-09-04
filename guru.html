@@ -183,7 +183,7 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
           <div class="page-header"><div class="eyebrow">Dashboard Guru</div><h1>Kelola Worksheet</h1></div>
           <div class="form-row">
             <div class="form-field"><label>Judul</label><input type="text" id="wsJudulInput" placeholder="mis. Latihan Simple Past"></div>
-            <div class="form-field"><label>Kelas</label><select id="wsKelasSelect"></select></div>
+            <div class="form-field"><label>Tingkat</label><select id="wsTingkatSelect"><option value="X">Tingkat X</option><option value="XI">Tingkat XI</option><option value="XII">Tingkat XII</option></select></div>
           </div>
           <div class="form-row">
             <div class="form-field"><label>URL Worksheet</label><input type="text" id="wsUrlInput" placeholder="https://..."></div>
@@ -209,7 +209,7 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
           <div class="form-field"><label>Deskripsi Singkat</label><input type="text" id="materiDeskripsiInput" placeholder="Deskripsi singkat materi ini"></div>
           <div class="form-row">
             <div class="form-field"><label>Link Materi (URL)</label><input type="text" id="materiUrlInput" placeholder="https://..."></div>
-            <div class="form-field"><label>Kelas Tujuan</label><select id="materiKelasSelect"><option value="">Semua Kelas (Umum)</option></select></div>
+            <div class="form-field"><label>Tingkat Tujuan</label><select id="materiTingkatSelect"><option value="">Semua Tingkat (Umum)</option><option value="X">Tingkat X</option><option value="XI">Tingkat XI</option><option value="XII">Tingkat XII</option></select></div>
           </div>
           <button class="btn-secondary-sm" id="btnTambahMateri">+ Tambahkan Materi</button>
           <p class="login-error" id="materiError" style="display:none;"></p>
@@ -927,13 +927,14 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
     const el = document.getElementById('worksheetList');
     const { data } = await supabase
       .from('worksheet')
-      .select('id, judul, url, mulai, deadline, kelas:kelas_id ( nama )')
+      .select('id, judul, url, mulai, deadline, level, kelas:kelas_id ( nama )')
       .order('created_at', { ascending: false });
     const list = data || [];
     const now = new Date();
     el.innerHTML = list.length ? list.map(w => {
       const belumMulai = w.mulai && new Date(w.mulai) > now;
-      const metaBits = [esc(w.kelas ? w.kelas.nama : '?')];
+      const targetLabel = w.level ? `Tingkat ${w.level}` : (w.kelas ? w.kelas.nama : '?');
+      const metaBits = [esc(targetLabel)];
       if (w.mulai) metaBits.push((belumMulai ? 'Mulai ' : 'Dibuka sejak ') + fmtDateTimeID(w.mulai));
       if (w.deadline) metaBits.push('Deadline ' + w.deadline);
       return `
@@ -960,15 +961,15 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
   document.getElementById('btnTambahWorksheet').addEventListener('click', async () => {
     const judul = document.getElementById('wsJudulInput').value.trim();
     const url = document.getElementById('wsUrlInput').value.trim();
-    const kelasId = document.getElementById('wsKelasSelect').value;
+    const level = document.getElementById('wsTingkatSelect').value;
     const mulaiRaw = document.getElementById('wsMulaiInput').value;
     const mulai = mulaiRaw ? new Date(mulaiRaw).toISOString() : null;
     const deadline = document.getElementById('wsDeadlineInput').value || null;
     const err = document.getElementById('wsError');
     err.style.display = 'none';
 
-    if (!judul || !url || !kelasId) {
-      err.textContent = 'Judul, URL, dan kelas wajib diisi.';
+    if (!judul || !url || !level) {
+      err.textContent = 'Judul, URL, dan tingkat wajib diisi.';
       err.style.display = 'block';
       return;
     }
@@ -977,7 +978,7 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
       err.style.display = 'block';
       return;
     }
-    const { error } = await supabase.from('worksheet').insert({ judul, url, kelas_id: kelasId, mulai, deadline });
+    const { error } = await supabase.from('worksheet').insert({ judul, url, level, kelas_id: null, mulai, deadline });
     if (error) { err.textContent = 'Gagal menambah worksheet: ' + error.message; err.style.display = 'block'; return; }
 
     document.getElementById('wsJudulInput').value = '';
@@ -1017,19 +1018,22 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
     const el = document.getElementById('materiList');
     const { data } = await supabase
       .from('materi')
-      .select('id, tag, judul, deskripsi, url, kelas:kelas_id ( nama )')
+      .select('id, tag, judul, deskripsi, url, level, kelas:kelas_id ( nama )')
       .order('created_at', { ascending: false });
     const list = data || [];
-    el.innerHTML = list.length ? list.map(m => `
+    el.innerHTML = list.length ? list.map(m => {
+      const targetLabel = m.level ? `Tingkat ${m.level}` : (m.kelas ? m.kelas.nama : 'Semua Tingkat');
+      return `
       <div class="list-row" style="align-items:flex-start;">
         <div>
-          <strong>${esc(m.judul)}</strong> <span style="color:#888;font-size:12.5px;">— ${m.kelas ? esc(m.kelas.nama) : 'Semua Kelas'}${m.tag ? ' · ' + esc(m.tag) : ''}</span>
+          <strong>${esc(m.judul)}</strong> <span style="color:#888;font-size:12.5px;">— ${esc(targetLabel)}${m.tag ? ' · ' + esc(m.tag) : ''}</span>
           ${m.deskripsi ? `<div style="font-size:13px;color:#666;margin-top:4px;max-width:520px;">${esc(m.deskripsi)}</div>` : ''}
           <div style="font-size:12px;color:#999;word-break:break-all;margin-top:2px;">${esc(m.url || '')}</div>
         </div>
         <button class="btn-danger-sm" data-id="${m.id}">Hapus</button>
       </div>
-    `).join('') : emptyState('Belum ada materi', 'Tambahkan materi pertama lewat form di atas.', '📘');
+    `;
+    }).join('') : emptyState('Belum ada materi', 'Tambahkan materi pertama lewat form di atas.', '📘');
 
     el.querySelectorAll('.btn-danger-sm').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -1045,7 +1049,7 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
     const tag = document.getElementById('materiTagInput').value.trim();
     const deskripsi = document.getElementById('materiDeskripsiInput').value.trim();
     const url = document.getElementById('materiUrlInput').value.trim();
-    const kelasId = document.getElementById('materiKelasSelect').value || null;
+    const level = document.getElementById('materiTingkatSelect').value || null;
     const err = document.getElementById('materiError');
     err.style.display = 'none';
 
@@ -1055,7 +1059,7 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
       return;
     }
     const { error } = await supabase.from('materi').insert({
-      judul, tag: tag || null, deskripsi: deskripsi || null, url, kelas_id: kelasId,
+      judul, tag: tag || null, deskripsi: deskripsi || null, url, kelas_id: null, level,
     });
     if (error) { err.textContent = 'Gagal menambah materi: ' + error.message; err.style.display = 'block'; return; }
 
@@ -1063,7 +1067,7 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
     document.getElementById('materiTagInput').value = '';
     document.getElementById('materiDeskripsiInput').value = '';
     document.getElementById('materiUrlInput').value = '';
-    document.getElementById('materiKelasSelect').value = '';
+    document.getElementById('materiTingkatSelect').value = '';
     await renderMateriList();
   });
 
@@ -1161,8 +1165,6 @@ Ani Wulandari, ani456, anipass2, X I"></textarea>
     await renderKelasChips();
     await renderSiswaKelasChips();
     fillKelasSelect(document.getElementById('nilaiKelasSelect'));
-    fillKelasSelect(document.getElementById('wsKelasSelect'));
-    fillKelasSelectWithAll(document.getElementById('materiKelasSelect'));
     renderAnnKelasChecklist();
     await renderKelasList();
     await renderWorksheetList();
