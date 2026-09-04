@@ -88,7 +88,7 @@
     <div class="ann-card">
       <div class="ann-date">${new Date(a.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</div>
       <h3>${esc(a.judul)}</h3>
-      <p>${esc(a.isi)}</p>
+      <p>${linkify(a.isi)}</p>
     </div>
   `).join('') : emptyState("Belum ada pengumuman", "Pengumuman terbaru akan muncul di sini.", "📣");
 

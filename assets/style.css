@@ -435,6 +435,8 @@ body{
   font-weight:600;
 }
 .ann-card p{margin:0; font-size:14px; line-height:1.65; color:#585F73;}
+.ann-card p a{color:#4C6FFF; text-decoration:underline; word-break:break-word;}
+.ann-card p a:hover{color:#3552d6;}
 
 /* Grades */
 .section-label{

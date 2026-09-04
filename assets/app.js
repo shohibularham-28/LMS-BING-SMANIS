@@ -89,3 +89,23 @@ function esc(str) {
   div.textContent = str == null ? "" : String(str);
   return div.innerHTML;
 }
+
+// Escape teks lalu ubah URL (http://, https://, atau www.) jadi link <a> yang bisa diklik.
+// Tetap aman dari XSS karena escaping dilakukan lebih dulu, baru <a> ditambahkan di atas hasil escape.
+function linkify(str) {
+  const escaped = esc(str);
+  const urlPattern = /(\bhttps?:\/\/[^\s<]+|\bwww\.[^\s<]+)/gi;
+  return escaped.replace(urlPattern, (match) => {
+    // Pisahkan tanda baca penutup (. , ) ] > dll) di ujung URL biar tidak ikut ke dalam link
+    const trailingPunct = /[.,!?:;)\]"'’”]+$/;
+    let cleanUrl = match;
+    let trail = "";
+    const m = match.match(trailingPunct);
+    if (m) {
+      trail = m[0];
+      cleanUrl = match.slice(0, match.length - trail.length);
+    }
+    const href = /^https?:\/\//i.test(cleanUrl) ? cleanUrl : "https://" + cleanUrl;
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${trail}`;
+  });
+}
